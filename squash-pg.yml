@@ -1,0 +1,75 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: squash-pg
+  labels:
+    name: squash
+spec:
+  containers:
+  - name: squash-pg
+    image: squashtest/squash-tm
+    resources:
+      limits:
+        memory: "768Mi"
+        cpu: "500m"
+    ports:
+      - containerPort: 8080
+    env: 
+      - name: POSTGRES_ENV_POSTGRES_USER
+        value: "squash-tm"
+      - name: POSTGRES_ENV_POSTGRES_PASSWORD
+        value: "initial_pw"
+      - name: POSTGRES_ENV_POSTGRES_DB
+        value: "squashtm"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: squash-pg
+spec:
+  selector:
+    name: squash
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 8080
+  type: NodePort
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: postgres
+  labels:
+    name: postgres
+spec:
+  containers:
+  - name: postgres
+    image: postgres:9.6
+    resources:
+      limits:
+        memory: "768Mi"
+        cpu: "500m"
+    ports:
+      - containerPort: 5432
+    env:
+      - name: POSTGRES_USER
+        value: "squash-tm"
+      - name: POSTGRES_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: postgres-credentials
+            key: password
+      - name: POSTGRES_DB
+        value: "squashtm"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+spec:
+  selector:
+    name: postgres
+  ports:
+  - port: 5432
+    targetPort: 5432
