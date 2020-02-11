@@ -1,0 +1,128 @@
+---
+## Deployment version of squash with postgres and volume
+## Use secrets.yml with this manifest
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: squash-pg
+spec:
+  selector:
+    matchLabels:
+      app: squash
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: squash
+    spec:
+      containers:
+      - name: squash-pg
+        image: squashtest/squash-tm
+        resources:
+          limits:
+            memory: "1Gi"
+            cpu: "600m"
+        ports:
+          - containerPort: 8080
+        env:
+          - name: POSTGRES_ENV_POSTGRES_USER
+            value: "squash-tm"
+          - name: POSTGRES_ENV_POSTGRES_PASSWORD
+            valueFrom:
+              name: postgres-credentials
+              key: password_pg
+          - name: POSTGRES_ENV_POSTGRES_DB
+            value: "squashtm"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: squash-pg
+spec:
+  selector:
+    app: squash
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 8080
+  type: NodePort
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+spec:
+  selector:
+    matchLabels:
+      name: postgres
+  template:
+    metadata:
+      labels:
+        name: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:9.6
+        volumeMounts:
+          - mountPath: /var/lib/postgresql/data
+            name: postgres-volume
+        resources:
+          limits:
+            memory: "1Gi"
+            cpu: "400m"
+        ports:
+        - containerPort: 5432
+        env:
+          - name: POSTGRES_USER
+            value: "squash-tm"
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: postgres-credentials
+                key: password_sq
+          - name: POSTGRES_DB
+            value: "squashtm"
+      volumes:
+        - name: postgres-volume
+          persistentVolumeClaim: 
+            claimName: postgres-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+spec:
+  selector:
+    name: postgres
+  ports:
+  - port: 5432
+    targetPort: 5432
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: postgres-pv
+  labels:
+    type: local
+spec:
+  capacity:
+    storage: 2Gi
+  storageClassName: standard
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: /data/postgres-pv
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  labels:
+    type: local
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 2Gi
+  volumeName: postgres-pv

@@ -17,7 +17,7 @@ spec:
       - containerPort: 8080
     env: 
       - name: POSTGRES_ENV_POSTGRES_USER
-        value: "squash-tm"
+        value: "squash-tm"  
       - name: POSTGRES_ENV_POSTGRES_PASSWORD
         value: "initial_pw"
       - name: POSTGRES_ENV_POSTGRES_DB
@@ -59,7 +59,7 @@ spec:
         valueFrom:
           secretKeyRef:
             name: postgres-credentials
-            key: password
+            key: password_sq
       - name: POSTGRES_DB
         value: "squashtm"
 ---
@@ -73,3 +73,5 @@ spec:
   ports:
   - port: 5432
     targetPort: 5432
+
+## Use secrets.yml with this manifest
