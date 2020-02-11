@@ -1,6 +1,7 @@
 ---
 ## Deployment version of squash with postgres and volume
 ## Use secrets.yml with this manifest
+## Add maintenance manifest to use on/off feature for squash
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -29,23 +30,11 @@ spec:
             value: "squash-tm"
           - name: POSTGRES_ENV_POSTGRES_PASSWORD
             valueFrom:
-              name: postgres-credentials
-              key: password_pg
+              secretKeyRef:
+                name: postgres-credentials
+                key: password_pg
           - name: POSTGRES_ENV_POSTGRES_DB
             value: "squashtm"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: squash-pg
-spec:
-  selector:
-    app: squash
-  ports:
-  - protocol: TCP
-    port: 8080
-    targetPort: 8080
-  type: NodePort
 ---
 apiVersion: apps/v1
 kind: Deployment

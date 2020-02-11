@@ -1,0 +1,59 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: maintenance
+spec:
+  selector:
+    matchLabels:
+      app: maintenance-container
+  template:
+    metadata:
+      labels:
+        app: maintenance-container
+    spec:
+      containers:
+      - name: maintenance-container
+        image: nginx
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+        ports:
+        - containerPort: 80
+        volumeMounts:
+          - name: maintenance-mount
+            mountPath: /usr/share/nginx/html
+      volumes:
+        - name: maintenance-mount
+          persistentVolumeClaim:
+            claimName: maintenance-pvc
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: maintenance-pv
+  labels:
+    type: local
+spec:
+  capacity:
+    storage: 5Mi 
+  storageClassName: standard
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: /data/maintenance
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: maintenance-pvc
+  labels:
+    type: local
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 4Mi
+  volumeName: maintenance-pv
