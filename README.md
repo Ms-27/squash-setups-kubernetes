@@ -5,11 +5,13 @@ Squash with h2 DB:
 
   - squash-h2.yml
   
+---  
   
 Squash with postgres:
 
   - squash-pg.yml
 
+---
 
 Squash with postgres using deployment and not pods:
 (it will re-instance once they stopped or being stopped)
